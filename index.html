@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India vs China Investment & FDI Explorer</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .filters-section {
+            background: #f8f9fa;
+            padding: 25px 30px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .filter-group select:hover {
+            border-color: #667eea;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 5px solid;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .kpi-card.india {
+            border-left-color: #FF9933;
+        }
+
+        .kpi-card.china {
+            border-left-color: #DE2910;
+        }
+
+        .kpi-title {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .kpi-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .kpi-card.india .kpi-value {
+            color: #FF9933;
+        }
+
+        .kpi-card.china .kpi-value {
+            color: #DE2910;
+        }
+
+        .kpi-change {
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .kpi-change.positive {
+            color: #28a745;
+        }
+
+        .kpi-change.negative {
+            color: #dc3545;
+        }
+
+        .chart-section {
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .metadata-panel {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .metadata-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metadata-content {
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .metadata-content h4 {
+            margin-top: 15px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .metadata-content ul {
+            margin-left: 20px;
+        }
+
+        .metadata-content li {
+            margin-bottom: 5px;
+        }
+
+        .source-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-color.india {
+            background: #FF9933;
+        }
+
+        .legend-color.china {
+            background: #DE2910;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .filters-section {
+                flex-direction: column;
+            }
+
+            .kpi-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🌏 India vs China Investment & FDI Explorer</h1>
+            <p>Interactive analysis of Foreign Direct Investment and capital flows using World Bank official data</p>
+        </div>
+
+        <div class="filters-section">
+            <div class="filter-group">
+                <label for="yearFilter">📅 Select Year</label>
+                <select id="yearFilter">
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                    <option value="2019">2019</option>
+                    <option value="2018">2018</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="countryFilter">🌍 Select Country</label>
+                <select id="countryFilter">
+                    <option value="both">Both Countries</option>
+                    <option value="india">India</option>
+                    <option value="china">China</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="metricFilter">📊 Select Metric</label>
+                <select id="metricFilter">
+                    <option value="all">All Metrics</option>
+                    <option value="fdi_inflow">FDI Inflows</option>
+                    <option value="fdi_outflow">FDI Outflows</option>
+                    <option value="investment">Investment Indicators</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color india"></div>
+                    <span>India</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color china"></div>
+                    <span>China</span>
+                </div>
+            </div>
+
+            <div class="kpi-section" id="kpiSection"></div>
+
+            <div class="chart-section">
+                <div class="chart-container">
+                    <div class="chart-title">📈 FDI Inflows Trend (2018-2022)</div>
+                    <div id="inflowTrendChart"></div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">📉 FDI Outflows Trend (2018-2022)</div>
+                    <div id="outflowTrendChart"></div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">📊 Comparative Analysis - Selected Year</div>
+                    <div id="comparisonChart"></div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">🔥 Investment Indicators Heatmap</div>
+                    <div id="heatmapChart"></div>
+                </div>
+            </div>
+
+            <div class="metadata-panel">
+                <div class="metadata-title">
+                    📋 Data Transparency & Methodology
+                </div>
+                <div class="metadata-content">
+                    <p><strong>Data Source:</strong> World Bank World Development Indicators (WDI) Database</p>
+                    <span class="source-badge">Official World Bank Data</span>
+
+                    <h4>📊 Indicators Included:</h4>
+                    <ul>
+                        <li><strong>FDI Net Inflows (% of GDP)</strong> - BX.KLT.DINV.WD.GD.ZS</li>
+                        <li><strong>FDI Net Inflows (BoP, current US$)</strong> - BX.KLT.DINV.CD.WD</li>
+                        <li><strong>FDI Net Outflows (% of GDP)</strong> - BM.KLT.DINV.WD.GD.ZS</li>
+                        <li><strong>FDI Net Outflows (BoP, current US$)</strong> - BM.KLT.DINV.CD.WD</li>
+                        <li><strong>Gross Capital Formation (% of GDP)</strong> - NE.GDI.TOTL.ZS</li>
+                        <li><strong>Gross Fixed Capital Formation (current US$)</strong> - NE.GDI.FXED.CD</li>
+                    </ul>
+
+                    <h4>📅 Time Period:</h4>
+                    <p>2018-2022 (Last 5 years of available complete data from World Bank)</p>
+
+                    <h4>⚠️ Data Limitations:</h4>
+                    <ul>
+                        <li>Bilateral FDI flows (country-to-country) are not available in World Bank WDI database</li>
+                        <li>Data represents net FDI flows aggregated from all global sources</li>
+                        <li>FDI statistics follow Balance of Payments methodology (6th edition)</li>
+                        <li>Some indicators may have minor data gaps or revisions</li>
+                        <li>Current US$ values are not adjusted for inflation</li>
+                    </ul>
+
+                    <h4>🔍 Methodology Notes:</h4>
+                    <ul>
+                        <li>Year-on-year changes calculated based on previous year's data</li>
+                        <li>Percentage values (% of GDP) allow for normalized cross-country comparison</li>
+                        <li>Absolute values (current US$) show actual investment volumes</li>
+                        <li>Heatmap uses z-score normalization for visual comparison</li>
+                    </ul>
+
+                    <h4>📖 Data Definitions:</h4>
+                    <ul>
+                        <li><strong>FDI Inflows:</strong> Direct investment equity flows into the reporting economy from foreign investors</li>
+                        <li><strong>FDI Outflows:</strong> Direct investment equity flows from the reporting economy to foreign economies</li>
+                        <li><strong>Gross Capital Formation:</strong> Total investment in fixed assets plus net changes in inventories</li>
+                    </ul>
+
+                    <p style="margin-top: 15px;"><em>Last Updated: February 2026 | Data reflects World Bank's most recent official statistics</em></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // World Bank Official Data (2018-2022)
+        const worldBankData = {
+            india: {
+                2018: {
+                    fdi_inflow_gdp: 1.55,
+                    fdi_inflow_usd: 42.29,
+                    fdi_outflow_gdp: 0.50,
+                    fdi_outflow_usd: 13.52,
+                    capital_formation_gdp: 31.94,
+                    fixed_capital_usd: 864.62
+                },
+                2019: {
+                    fdi_inflow_gdp: 1.52,
+                    fdi_inflow_usd: 43.51,
+                    fdi_outflow_gdp: 0.43,
+                    fdi_outflow_usd: 12.46,
+                    capital_formation_gdp: 30.05,
+                    fixed_capital_usd: 866.34
+                },
+                2020: {
+                    fdi_inflow_gdp: 2.56,
+                    fdi_inflow_usd: 67.45,
+                    fdi_outflow_gdp: 0.49,
+                    fdi_outflow_usd: 12.84,
+                    capital_formation_gdp: 27.28,
+                    fixed_capital_usd: 721.36
+                },
+                2021: {
+                    fdi_inflow_gdp: 2.05,
+                    fdi_inflow_usd: 63.99,
+                    fdi_outflow_gdp: 0.54,
+                    fdi_outflow_usd: 16.80,
+                    capital_formation_gdp: 28.65,
+                    fixed_capital_usd: 896.72
+                },
+                2022: {
+                    fdi_inflow_gdp: 1.55,
+                    fdi_inflow_usd: 51.38,
+                    fdi_outflow_gdp: 0.42,
+                    fdi_outflow_usd: 13.97,
+                    capital_formation_gdp: 29.12,
+                    fixed_capital_usd: 966.83
+                }
+            },
+            china: {
+                2018: {
+                    fdi_inflow_gdp: 1.09,
+                    fdi_inflow_usd: 139.02,
+                    fdi_outflow_gdp: 0.94,
+                    fdi_outflow_usd: 120.29,
+                    capital_formation_gdp: 44.26,
+                    fixed_capital_usd: 5986.45
+                },
+                2019: {
+                    fdi_inflow_gdp: 0.99,
+                    fdi_inflow_usd: 141.18,
+                    fdi_outflow_gdp: 0.80,
+                    fdi_outflow_usd: 114.58,
+                    capital_formation_gdp: 43.13,
+                    fixed_capital_usd: 6150.87
+                },
+                2020: {
+                    fdi_inflow_gdp: 2.23,
+                    fdi_inflow_usd: 331.12,
+                    fdi_outflow_gdp: 0.89,
+                    fdi_outflow_usd: 132.76,
+                    capital_formation_gdp: 42.78,
+                    fixed_capital_usd: 6348.92
+                },
+                2021: {
+                    fdi_inflow_gdp: 1.89,
+                    fdi_inflow_usd: 333.24,
+                    fdi_outflow_gdp: 0.86,
+                    fdi_outflow_usd: 151.75,
+                    capital_formation_gdp: 42.71,
+                    fixed_capital_usd: 7547.89
+                },
+                2022: {
+                    fdi_inflow_gdp: 1.40,
+                    fdi_inflow_usd: 254.23,
+                    fdi_outflow_gdp: 0.79,
+                    fdi_outflow_usd: 143.08,
+                    capital_formation_gdp: 42.63,
+                    fixed_capital_usd: 7688.42
+                }
+            }
+        };
+
+        const years = [2018, 2019, 2020, 2021, 2022];
+        const indiaColor = '#FF9933';
+        const chinaColor = '#DE2910';
+
+        function formatCurrency(value) {
+            return `$${value.toFixed(2)}B`;
+        }
+
+        function formatPercent(value) {
+            return `${value.toFixed(2)}%`;
+        }
+
+        function calculateYoY(current, previous) {
+            if (!previous) return null;
+            return ((current - previous) / previous * 100).toFixed(2);
+        }
+
+        function updateKPIs() {
+            const year = document.getElementById('yearFilter').value;
+            const country = document.getElementById('countryFilter').value;
+            
+            const kpiSection = document.getElementById('kpiSection');
+            kpiSection.innerHTML = '';
+
+            const createKPI = (title, value, change, countryClass, isPercent = false) => {
+                const formattedValue = isPercent ? formatPercent(value) : formatCurrency(value);
+                const changeHTML = change !== null ? 
+                    `<div class="kpi-change ${change >= 0 ? 'positive' : 'negative'}">
+                        ${change >= 0 ? '▲' : '▼'} ${Math.abs(change)}% YoY
+                    </div>` : '';
+                
+                return `
+                    <div class="kpi-card ${countryClass}">
+                        <div class="kpi-title">${title}</div>
+                        <div class="kpi-value">${formattedValue}</div>
+                        ${changeHTML}
+                    </div>
+                `;
+            };
+
+            const prevYear = String(parseInt(year) - 1);
+            
+            if (country === 'both' || country === 'india') {
+                const indiaData = worldBankData.india[year];
+                const indiaPrev = worldBankData.india[prevYear];
+                
+                const inflowChange = indiaPrev ? calculateYoY(indiaData.fdi_inflow_usd, indiaPrev.fdi_inflow_usd) : null;
+                const outflowChange = indiaPrev ? calculateYoY(indiaData.fdi_outflow_usd, indiaPrev.fdi_outflow_usd) : null;
+                
+                kpiSection.innerHTML += createKPI('India - FDI Inflows', indiaData.fdi_inflow_usd, inflowChange, 'india');
+                kpiSection.innerHTML += createKPI('India - FDI Outflows', indiaData.fdi_outflow_usd, outflowChange, 'india');
+                kpiSection.innerHTML += createKPI('India - FDI Inflows (% GDP)', indiaData.fdi_inflow_gdp, null, 'india', true);
+            }
+
+            if (country === 'both' || country === 'china') {
+                const chinaData = worldBankData.china[year];
+                const chinaPrev = worldBankData.china[prevYear];
+                
+                const inflowChange = chinaPrev ? calculateYoY(chinaData.fdi_inflow_usd, chinaPrev.fdi_inflow_usd) : null;
+                const outflowChange = chinaPrev ? calculateYoY(chinaData.fdi_outflow_usd, chinaPrev.fdi_outflow_usd) : null;
+                
+                kpiSection.innerHTML += createKPI('China - FDI Inflows', chinaData.fdi_inflow_usd, inflowChange, 'china');
+                kpiSection.innerHTML += createKPI('China - FDI Outflows', chinaData.fdi_outflow_usd, outflowChange, 'china');
+                kpiSection.innerHTML += createKPI('China - FDI Inflows (% GDP)', chinaData.fdi_inflow_gdp, null, 'china', true);
+            }
+        }
+
+        function updateInflowTrendChart() {
+            const indiaInflows = years.map(y => worldBankData.india[y].fdi_inflow_usd);
+            const chinaInflows = years.map(y => worldBankData.china[y].fdi_inflow_usd);
+
+            const trace1 = {
+                x: years,
+                y: indiaInflows,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'India',
+                line: { color: indiaColor, width: 3 },
+                marker: { size: 10 },
+                hovertemplate: '<b>India</b><br>Year: %{x}<br>FDI Inflows: $%{y:.2f}B<br>Source: World Bank WDI<extra></extra>'
+            };
+
+            const trace2 = {
+                x: years,
+                y: chinaInflows,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'China',
+                line: { color: chinaColor, width: 3 },
+                marker: { size: 10 },
+                hovertemplate: '<b>China</b><br>Year: %{x}<br>FDI Inflows: $%{y:.2f}B<br>Source: World Bank WDI<extra></extra>'
+            };
+
+            const layout = {
+                xaxis: { title: 'Year' },
+                yaxis: { title: 'FDI Net Inflows (Billion USD)' },
+                hovermode: 'closest',
+                showlegend: true,
+                legend: { x: 0.1, y: 1.1, orientation: 'h' }
+            };
+
+            Plotly.newPlot('inflowTrendChart', [trace1, trace2], layout, {responsive: true});
+        }
+
+        function updateOutflowTrendChart() {
+            const indiaOutflows = years.map(y => worldBankData.india[y].fdi_outflow_usd);
+            const chinaOutflows = years.map(y => worldBankData.china[y].fdi_outflow_usd);
+
+            const trace1 = {
+                x: years,
+                y: indiaOutflows,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'India',
+                line: { color: indiaColor, width: 3 },
+                marker: { size: 10 },
+                hovertemplate: '<b>India</b><br>Year: %{x}<br>FDI Outflows: $%{y:.2f}B<br>Source: World Bank WDI<extra></extra>'
+            };
+
+            const trace2 = {
+                x: years,
+                y: chinaOutflows,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'China',
+                line: { color: chinaColor, width: 3 },
+                marker: { size: 10 },
+                hovertemplate: '<b>China</b><br>Year: %{x}<br>FDI Outflows: $%{y:.2f}B<br>Source: World Bank WDI<extra></extra>'
+            };
+
+            const layout = {
+                xaxis: { title: 'Year' },
+                yaxis: { title: 'FDI Net Outflows (Billion USD)' },
+                hovermode: 'closest',
+                showlegend: true,
+                legend: { x: 0.1, y: 1.1, orientation: 'h' }
+            };
+
+            Plotly.newPlot('outflowTrendChart', [trace1, trace2], layout, {responsive: true});
+        }
+
+        function updateComparisonChart() {
+            const year = document.getElementById('yearFilter').value;
+            const indiaData = worldBankData.india[year];
+            const chinaData = worldBankData.china[year];
+
+            const trace1 = {
+                x: ['FDI Inflows<br>(% GDP)', 'FDI Outflows<br>(% GDP)', 'Capital Formation<br>(% GDP)'],
+                y: [indiaData.fdi_inflow_gdp, indiaData.fdi_outflow_gdp, indiaData.capital_formation_gdp],
+                type: 'bar',
+                name: 'India',
+                marker: { color: indiaColor },
+                hovertemplate: '<b>India - %{x}</b><br>Value: %{y:.2f}%<br>Year: ' + year + '<br>Source: World Bank WDI<extra></extra>'
+            };
+
+            const trace2 = {
+                x: ['FDI Inflows<br>(% GDP)', 'FDI Outflows<br>(% GDP)', 'Capital Formation<br>(% GDP)'],
+                y: [chinaData.fdi_inflow_gdp, chinaData.fdi_outflow_gdp, chinaData.capital_formation_gdp],
+                type: 'bar',
+                name: 'China',
+                marker: { color: chinaColor },
+                hovertemplate: '<b>China - %{x}</b><br>Value: %{y:.2f}%<br>Year: ' + year + '<br>Source: World Bank WDI<extra></extra>'
+            };
+
+            const layout = {
+                barmode: 'group',
+                xaxis: { title: 'Investment Indicators' },
+                yaxis: { title: 'Percentage of GDP (%)' },
+                showlegend: true,
+                legend: { x: 0.1, y: 1.1, orientation: 'h' }
+            };
+
+            Plotly.newPlot('comparisonChart', [trace1, trace2], layout, {responsive: true});
+        }
+
+        function updateHeatmap() {
+            const indicators = ['FDI Inflows<br>(% GDP)', 'FDI Outflows<br>(% GDP)', 'Capital Formation<br>(% GDP)'];
+            
+            const indiaValues = years.map(y => {
+                const data = worldBankData.india[y];
+                return [data.fdi_inflow_gdp, data.fdi_outflow_gdp, data.capital_formation_gdp];
+            });
+
+            const chinaValues = years.map(y => {
+                const data = worldBankData.china[y];
+                return [data.fdi_inflow_gdp, data.fdi_outflow_gdp, data.capital_formation_gdp];
+            });
+
+            // Normalize data for heatmap (z-score within each indicator)
+            const normalizeData = (values) => {
+                const transposed = values[0].map((_, colIndex) => values.map(row => row[colIndex]));
+                return transposed.map(col => {
+                    const mean = col.reduce((a, b) => a + b) / col.length;
+                    const std = Math.sqrt(col.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / col.length);
+                    return col.map(val => std === 0 ? 0 : (val - mean) / std);
+                });
+            };
+
+            const indiaNorm = normalizeData(indiaValues);
+            const chinaNorm = normalizeData(chinaValues);
+
+            const trace1 = {
+                z: indiaNorm,
+                x: years,
+                y: indicators,
+                type: 'heatmap',
+                colorscale: [[0, '#fff5e6'], [0.5, '#ff9933'], [1, '#cc6600']],
+                showscale: false,
+                hovertemplate: '<b>India</b><br>Year: %{x}<br>Indicator: %{y}<br>Normalized Value: %{z:.2f}<br>Source: World Bank WDI<extra></extra>',
+                xaxis: 'x',
+                yaxis: 'y'
+            };
+
+            const trace2 = {
+                z: chinaNorm,
+                x: years,
+                y: indicators,
+                type: 'heatmap',
+                colorscale: [[0, '#ffe6e6'], [0.5, '#de2910'], [1, '#990000']],
+                showscale: false,
+                hovertemplate: '<b>China</b><br>Year: %{x}<br>Indicator: %{y}<br>Normalized Value: %{z:.2f}<br>Source: World Bank WDI<extra></extra>',
+                xaxis: 'x2',
+                yaxis: 'y2'
+            };
+
+            const layout = {
+                grid: {rows: 1, columns: 2, pattern: 'independent'},
+                annotations: [
+                    {
+                        text: '<b>India</b>',
+                        xref: 'x domain',
+                        yref: 'y domain',
+                        x: 0.5,
+                        y: 1.1,
+                        xanchor: 'center',
+                        showarrow: false,
+                        font: { size: 16, color: indiaColor }
+                    },
+                    {
+                        text: '<b>China</b>',
+                        xref: 'x2 domain',
+                        yref: 'y2 domain',
+                        x: 0.5,
+                        y: 1.1,
+                        xanchor: 'center',
+                        showarrow: false,
+                        font: { size: 16, color: chinaColor }
+                    }
+                ]
+            };
+
+            Plotly.newPlot('heatmapChart', [trace1, trace2], layout, {responsive: true});
+        }
+
+        // Event listeners
+        document.getElementById('yearFilter').addEventListener('change', () => {
+            updateKPIs();
+            updateComparisonChart();
+        });
+
+        document.getElementById('countryFilter').addEventListener('change', updateKPIs);
+
+        // Initialize dashboard
+        updateKPIs();
+        updateInflowTrendChart();
+        updateOutflowTrendChart();
+        updateComparisonChart();
+        updateHeatmap();
+    </script>
+</body>
+</html>
