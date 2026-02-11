@@ -1,0 +1,94 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>India–China Investment & FDI Dashboard (World Bank)</title>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f9fb; color: #1f2933; }
+    h1 { font-size: 24px; }
+    .controls { margin-bottom: 20px; }
+    .card { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .kpi { display: flex; gap: 20px; }
+    .kpi div { flex: 1; background: #eef2f7; padding: 10px; border-radius: 6px; }
+    footer { font-size: 12px; color: #555; }
+</style>
+</head>
+<body>
+
+<h1>India–China Investment & FDI Flows (World Bank – Real Time)</h1>
+
+<div class="controls card">
+    <label>Metric:
+        <select id="metric">
+            <option value="BX.KLT.DINV.CD.WD">FDI Inflows (USD)</option>
+            <option value="BM.KLT.DINV.CD.WD">FDI Outflows (USD)</option>
+        </select>
+    </label>
+</div>
+
+<div class="card kpi">
+    <div id="kpi_india">India: Loading…</div>
+    <div id="kpi_china">China: Loading…</div>
+</div>
+
+<div class="card">
+    <div id="linechart"></div>
+</div>
+
+<div class="card">
+    <h3>Metadata & Limitations</h3>
+    <ul>
+        <li><b>Data source:</b> World Bank – World Development Indicators (WDI)</li>
+        <li><b>Units:</b> Current USD</li>
+        <li><b>Frequency:</b> Annual</li>
+        <li><b>Coverage:</b> Aggregate national FDI only</li>
+        <li><b>Not available:</b> Bilateral India–China FDI flows (not published by World Bank)</li>
+    </ul>
+</div>
+
+<footer>
+    Data is fetched in real time from the World Bank API when you open or refresh this file.
+</footer>
+
+<script>
+async function fetchData(country, indicator) {
+    const url = `https://api.worldbank.org/v2/country/${country}/indicator/${indicator}?format=json&per_page=10`;
+    const response = await fetch(url);
+    const data = await response.json();
+    return data[1].filter(d => d.value !== null).slice(0,5).reverse();
+}
+
+async function updateDashboard() {
+    const indicator = document.getElementById("metric").value;
+
+    const india = await fetchData("IND", indicator);
+    const china = await fetchData("CHN", indicator);
+
+    const years = india.map(d => d.date);
+    const indiaValues = india.map(d => d.value);
+    const chinaValues = china.map(d => d.value);
+
+    document.getElementById("kpi_india").innerHTML =
+        `<b>India (${years[years.length-1]})</b><br>USD ${indiaValues[indiaValues.length-1].toLocaleString()}`;
+
+    document.getElementById("kpi_china").innerHTML =
+        `<b>China (${years[years.length-1]})</b><br>USD ${chinaValues[chinaValues.length-1].toLocaleString()}`;
+
+    const trace1 = { x: years, y: indiaValues, mode: 'lines+markers', name: 'India' };
+    const trace2 = { x: years, y: chinaValues, mode: 'lines+markers', name: 'China' };
+
+    Plotly.newPlot('linechart', [trace1, trace2], {
+        title: 'FDI Trend (Last 5 Available Years)',
+        yaxis: { title: 'USD' },
+        xaxis: { title: 'Year' }
+    });
+}
+
+document.getElementById("metric").addEventListener("change", updateDashboard);
+updateDashboard();
+</script>
+
+</body>
+</html>
